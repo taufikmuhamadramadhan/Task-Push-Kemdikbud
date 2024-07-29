@@ -12,8 +12,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('applications', function (Blueprint $table) {
-            $table->uuid('id')->primary();
-            $table->uuid('user_id');
+            $table->uuid('user_id')->primary();
             $table->string('token', 255)->nullable();
             $table->timestamp('expired_at')->nullable();
 

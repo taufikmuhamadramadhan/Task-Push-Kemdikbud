@@ -3,20 +3,19 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Facades\Validator;
+use App\Models\User;
 use App\Models\Application;
 use App\Models\LoginHistory;
-use App\Models\User;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Session;
+use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
-use Illuminate\Support\Facades\Log;
 
 class AuthController extends Controller
 {
     public function viewLogin()
     {
-        return view('Auth/login');
+        return view('Auth/login'); // Pastikan Anda memiliki view login.blade.php
     }
 
     public function login(Request $request)
@@ -41,13 +40,10 @@ class AuthController extends Controller
             // Buat token
             $token = Str::random(60);
 
-            Log::info('User ID: ' . $user->id);
-            Log::info('Generated Token: ' . $token);
-
             // Simpan token di tabel applications
             Application::updateOrCreate(
                 ['user_id' => $user->id],
-                ['id' => Str::uuid(), 'token' => hash('sha256', $token), 'expired_at' => now()->addDay()]
+                ['token' => hash('sha256', $token), 'expired_at' => now()->addDay()]
             );
 
             // Perbarui status login pengguna
@@ -58,13 +54,18 @@ class AuthController extends Controller
 
             // Simpan ke login history
             LoginHistory::create([
+                'id' => Str::uuid(),
                 'user_id' => $user->id,
                 'status' => 'success',
                 'device' => $request->header('User-Agent'),
                 'created_at' => now(),
             ]);
 
-            return response()->json(['token' => $token]);
+            // Simpan token di session
+            Session::put(['api_token' => $token, 'user_id' => $user->id]);
+
+            // Arahkan ke halaman dashboard
+            return redirect()->route('home');
         } else {
             return response()->json(['error' => 'Invalid Password input'], 401);
         }
@@ -72,6 +73,7 @@ class AuthController extends Controller
         // Simpan login history untuk percobaan login yang gagal
         if ($user) {
             LoginHistory::create([
+                'id' => Str::uuid(),
                 'user_id' => $user->id,
                 'status' => 'failed',
                 'device' => $request->header('User-Agent'),
@@ -84,11 +86,18 @@ class AuthController extends Controller
 
     public function logout(Request $request)
     {
-        $token = $request->bearerToken();
+
+        $token = Session::get('api_token');
+
         if ($token) {
             Application::where('token', hash('sha256', $token))->delete();
         }
+        // Hapus token dari session
+        Session::forget(['api_token', 'user_id']);
 
-        return response()->json(['message' => 'Successfully logged out']);
+
+
+        // Arahkan ke halaman login
+        return redirect()->route('login.form');
     }
 }

@@ -12,7 +12,8 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('login_history', function (Blueprint $table) {
-            $table->uuid('user_id')->primary();
+            $table->uuid('id')->primary();
+            $table->uuid('user_id');
             $table->string('status', 255)->nullable();
             $table->string('device', 255)->nullable();
             $table->timestamp('created_at')->nullable();

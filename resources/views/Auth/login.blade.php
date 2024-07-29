@@ -6,7 +6,7 @@
 </head>
 
 <body>
-    <form action="{{ route('login') }}" method="POST">
+    <form action="{{ route('login.submit') }}" method="POST">
         @csrf
         <label for="email">Email:</label>
         <input type="email" id="email" name="email" required>

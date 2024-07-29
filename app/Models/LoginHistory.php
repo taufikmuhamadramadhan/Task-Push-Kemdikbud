@@ -10,7 +10,7 @@ class LoginHistory extends Model
     use HasFactory;
 
     protected $fillable = [
-        'user_id', 'status', 'device', 'created_at'
+        'id', 'user_id', 'status', 'device', 'created_at'
     ];
 
     public $timestamps = false;
